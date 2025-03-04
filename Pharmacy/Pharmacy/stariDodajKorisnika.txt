@@ -1,0 +1,540 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.Entity;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Security.Cryptography;
+
+namespace Pharmacy
+{
+    public partial class NewUserForm : Form
+    {
+        static readonly string ERR_MESSAGE_SR = "Niste unijeli sva polja!";
+        const string USERNAME_EMPTY = "Insert your username.";
+        const string USERNAME_TAKEN = "Username is already taken. Insert another username.";
+        const string PASSWORD_EMPTY = "Insert your password.";
+        const string CONFIRM_PASSWORD_EMPTY = "Confirm your password.";
+        const string CONFIRM_PASSWORD_NON_EQUAL = "Passwords have to be equal.";
+
+        List<User> users = new List<User>();
+       
+        public NewUserForm()
+        {
+            InitializeComponent();
+            hideAllRedLabels();
+        }
+
+
+        private void setSerbian()
+        {
+            lblTitleUserData.Text = "Podaci o korisniku";
+            lblPersonalData.Text = "Lièni podaci";
+            lblFirstName.Text = "Ime";
+            lblLastName.Text = "Prezime";
+            lblPID.Text = "JMBG";
+
+            lblUserData.Text = "Korisnièki podaci";
+            lblContact.Text = "Kontakt podaci";
+            lblEmail.Text = "Email";
+            lblPhoneNumber.Text = "Broj telefona";
+
+            lblAddress.Text = "Adresa stanovanja";
+            lblCountry.Text = "Država";
+            lblCity.Text = "Grad";
+            lblPlace.Text = "Mjesto";
+            lblStreet.Text = "Ulica";
+            lblZipCode.Text = "Poštanski broj";
+            lblHouseNumber.Text = "Broj";
+            lblRole.Text = "Uloga";
+            lblUsername.Text = "Korisnièko ime";
+            lblPassword.Text = "Lozinka";
+            lblConfirmPassword.Text = "Potvrda lozinke";
+
+            rbAdmin.Text = "Administrator";
+            rbPharmacist.Text = "Farmaceut";
+            btnSave.Text = "Saèuvaj";
+            btnCancel.Text = "Otkaži";
+        }
+
+      
+
+
+        private void setEnglish()
+        {
+            lblTitleUserData.Text = "User data";
+            lblPersonalData.Text = "Personal data";
+            lblFirstName.Text = "First name";
+            lblLastName.Text = "Last name";
+            lblPID.Text = "PID";
+
+            lblUserData.Text = "Account data";
+            lblContact.Text = "Contact";
+            //lblEmail.Text = "Email";
+            lblPhoneNumber.Text = "Phone number";
+
+            lblAddress.Text = "Address";
+            lblCountry.Text = "Country";
+            lblCity.Text = "City";
+            lblPlace.Text = "Place";
+            lblStreet.Text = "Street";
+            lblZipCode.Text = "Zip code";
+            lblHouseNumber.Text = "House number";
+            lblRole.Text = "Role";
+            lblUsername.Text = "Username";
+            lblPassword.Text = "Password";
+            lblConfirmPassword.Text = "Confirm password";
+
+            rbAdmin.Text = "Admin";
+            rbPharmacist.Text = "Pharmacist";
+            btnSave.Text = "Save";
+            btnCancel.Text = "Cancel";
+        }
+
+        private void setTheme(Theme theme)
+        {
+            lblTitleUserData.Font = new Font(theme.font, 15);
+            lblPersonalData.Font = lblUserData.Font=lblContact.Font= new Font(theme.font, 13);
+            lblFirstName.Font = lblLastName.Font = lblPID.Font = lblEmail.Font = lblPhoneNumber.Font =
+            lblCountry.Font = lblCity.Font = lblPlace.Font = lblStreet.Font = lblZipCode.Font = lblHouseNumber.Font =
+            lblUsername.Font = lblPassword.Font = lblConfirmPassword.Font = rbAdmin.Font = rbPharmacist.Font=lblRole.Font = new Font(theme.font, 11);
+        }
+
+        private void hideAllRedLabels()
+        {
+            lblInvalidFirstName.Hide();
+            lblInvalidLastName.Hide();
+            lblInvalidPID.Hide();
+            lblInvalidCountry.Hide();
+            lblInvalidCity.Hide();
+            lblInvalidPlace.Hide();
+            lblInvalidZipCode.Hide();
+            lblInvalidStreet.Hide();
+            lblInvalidHouseNumber.Hide();
+            lblInvalidEmail.Hide();
+            lblInvalidPhoneNumber.Hide();
+            lblInvalidUsername.Hide();
+            lblInvalidPassword.Hide();
+            lblInvalidConfirmPassword.Hide();
+        }
+
+        private void processLabels()
+        {
+
+            if (isNullOrEmpty(tbFirstName.Text.Trim()))
+            {
+                lblInvalidFirstName.Show();
+            }
+
+            if (isNullOrEmpty(tbLastName.Text.Trim()))
+            {
+                lblInvalidLastName.Show();
+            }
+
+            if (isNullOrEmpty(tbPID.Text.Trim()))
+            {
+                lblInvalidPID.Show();
+            }
+
+            if (isNullOrEmpty(tbCountry.Text.Trim()))
+            {
+                lblInvalidCountry.Show();
+            }
+
+            if (isNullOrEmpty(tbCity.Text.Trim()))
+            {
+                lblInvalidCountry.Show();
+            }
+
+
+            if (isNullOrEmpty(tbPlace.Text.Trim()))
+            {
+                lblInvalidCountry.Show();
+            }
+
+
+            if (isNullOrEmpty(tbZipCode.Text.Trim()))
+            {
+                lblInvalidCountry.Show();
+            }
+
+
+            if (isNullOrEmpty(tbStreet.Text.Trim()))
+            {
+                lblInvalidCountry.Show();
+            }
+
+            if (isNullOrEmpty(tbHouseNumber.Text.Trim()))
+            {
+                lblInvalidCountry.Show();
+            }
+
+            if (isNullOrEmpty(tbEmail.Text.Trim()))
+            {
+                lblInvalidEmail.Show();
+            }
+
+            if (isNullOrEmpty(tbPhoneNumber.Text.Trim()))
+            {
+                lblInvalidPhoneNumber.Show();
+            }
+
+            if (isNullOrEmpty(tbUsername.Text.Trim()))
+            {
+                lblInvalidUsername.Show();
+            }
+
+            if (isNullOrEmpty(tbPassword.Text.Trim()))
+            {
+                lblInvalidPassword.Show();
+            }
+
+            if (isNullOrEmpty(tbConfirmPassword.Text.Trim()))
+            {
+                lblInvalidConfirmPassword.Show();
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            processLabels();
+
+            //PROVJERA DA LI KORISNIK VEC POSTOJI U BAZI
+            using(var context=new PharmacyDB())
+            {
+                int houseNumber;
+                Int32.TryParse(tbHouseNumber.Text.Trim(), out houseNumber);
+
+                ////Address address = context.Addresses.Where(a => a.Place == tbPlace.Text && a.Street == tbStreet.Text && a.HouseNumber==houseNumber).FirstOrDefault();
+                ////if (address != null)
+                ////{
+                ////    context.Entry(address).State = EntityState.Modified;
+                ////}
+                ////else
+                ////{
+                ////    address = new Address();
+                ////}
+                ///
+
+                Address address = context.Addresses.Where(a => a.Place == tbPlace.Text && a.Street == tbStreet.Text && a.HouseNumber == houseNumber).FirstOrDefault();
+                if(address==null)
+                {
+                   address = new Address()
+                    {
+                        Country = tbCountry.Text,
+                        City = tbCity.Text,
+                        Place = tbPlace.Text,
+                        Street = tbStreet.Text,
+                        ZipCode = tbZipCode.Text,
+                        HouseNumber = houseNumber
+                    };
+                    context.Addresses.Add(address);
+                    context.SaveChanges();
+                }
+                ////var addressState = context.Entry(address).State;
+                //address.Country = tbCountry.Text;
+                //address.City = tbCity.Text;
+                //address.Place = tbPlace.Text;
+                //address.Street = tbStreet.Text;
+                //address.ZipCode = tbZipCode.Text;
+                //address.HouseNumber = houseNumber;
+
+
+                //Console.WriteLine(context.Entry(newProduct).State.ToString());
+                //if (addressState != EntityState.Modified)
+                //{
+                //    //try
+                //    //{
+                //        //Address newAddress = new Address(address);
+                //        ////address = new Address()
+                //        ////{
+                //        ////    Country = tbCountry.Text,
+                //        ////    City = tbCity.Text,
+                //        ////    Place = tbPlace.Text,
+                //        ////    Street = tbStreet.Text,
+                //        ////    ZipCode = tbZipCode.Text,
+                //        ////    HouseNumber = houseNumber
+                //        ////};
+                //        //context.Addresses.Add(newAddress);
+                //        context.Addresses.Add(address);
+                //        var success = context.SaveChanges();
+                //        if (success != 0)
+                //        {
+                //            Console.WriteLine("Address added successfully!");
+                //        }
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    Console.WriteLine("Update address: " + ex.Message);
+                    //}
+                //}
+                        
+                
+                User user = context.Users.Where(u => u.Username == tbUsername.Text).FirstOrDefault();
+                if (user != null)
+                {
+                    context.Entry(user).State = EntityState.Modified;
+                }
+                else
+                {
+                    user = new User();
+                }
+                
+                user.FirstName = tbFirstName.Text;
+                user.LastName = tbLastName.Text;
+                user.PID = tbPID.Text;
+                user.AddressId = address.AddressId;
+                user.Email = tbEmail.Text;
+                user.PhoneNumber = tbPhoneNumber.Text;
+                user.Username = tbUsername.Text;
+                string password= generatePasswordHash(tbPassword.Text);
+                string confirmPassword = generatePasswordHash(tbConfirmPassword.Text);
+                if (password == confirmPassword)
+                {
+                    user.Password = password;
+                }
+                else
+                {
+                    lblConfirmPassword.Show();
+                }
+                user.UserRole = rbAdmin.Checked ? (byte)1 : (byte)0;
+                
+
+                foreach(var u in context.Users)
+                {
+                    if (tbUsername.Text == u.Username)
+                    {
+                        break;
+                        lblInvalidUsername.Show();
+                    }
+                }
+                var userState = context.Entry(user).State;
+
+                if (userState != EntityState.Modified)
+                {
+                    //try
+                    //{
+                        User newUser = new User(user);
+                        context.Users.Add(newUser);
+                        int success = context.SaveChanges();
+                        if (success != 0)
+                        {
+                            MessageBox.Show("User added successfully!");
+                        }
+
+                    //}
+                    //catch(Exception ex)
+                    //{
+                    //    Console.WriteLine("Update user: " + ex.Message);
+                    //}
+                   
+                }
+
+            }
+            MessageBox.Show("User registered successfully!");
+        }
+        //}
+
+        private string generatePasswordHash(string password)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                return Convert.ToBase64String(hash);
+            }
+        }
+        public void setUserData(User user)
+        {
+            tbFirstName.Text = user.FirstName;
+            tbLastName.Text = user.LastName;
+            tbPID.Text = user.PID;
+            tbEmail.Text = user.Email;
+            tbPhoneNumber.Text = user.PhoneNumber;
+            tbCountry.Text = user.Address.Country;
+            tbCity.Text = user.Address.City;
+            tbPlace.Text = user.Address.Place;
+            tbStreet.Text = user.Address.Street;
+            tbZipCode.Text = user.Address.ZipCode;
+            tbHouseNumber.Text = user.Address.HouseNumber.ToString();
+            tbUsername.Text = user.Username;
+            tbPassword.Text = user.Password;
+            if (user.UserRole == 1)
+            {
+                rbAdmin.Checked = true;
+            }
+            else 
+            {
+                rbPharmacist.Checked= true;
+            }
+        }
+
+
+       
+
+
+        private void InsertUser(User user)
+        {
+            try
+            {
+                using (var context = new PharmacyDB())
+                {
+                    context.Users.Add(user);
+                    var res = context.SaveChanges();
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+
+        private void InsertAddress(Address address)
+        {
+            try
+            {
+                using (var context = new PharmacyDB())
+                {
+                    context.Addresses.Add(address);
+                    context.SaveChanges();
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+
+        private void UpdateUser(User user)
+        {
+            using (var context = new PharmacyDB())
+            {
+                {
+                    context.Entry(user).State = System.Data.Entity.EntityState.Modified;
+                    context.SaveChanges();
+                }
+            }
+        }
+
+
+        private bool isNullOrEmpty(string str)
+        {
+            return string.IsNullOrEmpty(str);
+        }
+
+        //FUNKCIJA KOJA PROVJERAVA DA LI STRING SADRZI SAMO SLOVNE KARATERE
+        private bool isStringValid(string s)
+        {
+            return s.All(char.IsLetter);
+        }
+
+        private void tbFirstName_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isNumberCharacter(e.KeyChar) || Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled=true;
+            }
+        }
+
+        private void tbLastName_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isNumberCharacter(e.KeyChar) || Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tbPID_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isLetter(e.KeyChar) || Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tbCountry_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isNumberCharacter(e.KeyChar) || Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tbCity_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isNumberCharacter(e.KeyChar) || Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+
+
+        private void tbPlace_KeyPress(object sender, KeyPressEventArgs e)
+        {
+
+            if (Functions.isNumberCharacter(e.KeyChar) || Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tbStreet_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tbZipCode_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isLetter(e.KeyChar) || Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tbHouseNumber_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isLetter(e.KeyChar) || Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+       
+
+        private void tbPhoneNumber_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isLetter(e.KeyChar) || Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tbUsername_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isSpecificCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tbEmail_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (Functions.isNonEmailCharacter(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        
+    }
+}
+    

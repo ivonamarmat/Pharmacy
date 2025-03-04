@@ -1,0 +1,551 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Pharmacy
+{
+    public partial class panelProducts : UserControl
+    {
+       
+        public panelProducts()
+        {
+            InitializeComponent();
+            addColumnButtons();
+            dgProducts.Rows.Clear();
+            //loadProducts();
+            //comboBoxSorting.SelectedIndex = 0;
+            //checkBoxSorting.Checked = true;
+            var products = new PharmacyDB().Products.ToList();
+            displayProducts(products);
+            
+            //displayProducts(sortProducts(comboBoxSorting.SelectedItem.ToString(), true));   
+            adjustDGHeight();
+        }
+
+      
+       public void setSerbian()
+       {
+            lblProductsHeader.Text = "Proizvodi";
+            List<string> columns = new List<string>{ "Šifra", "Naziv", "Kolièina", "Opis", "Proizvoðaè", "Cijena" };
+            List<string> items = new List<string> { "Šifra", "Naziv", "Kolièina", "Cijena" };
+            int i = 0;
+            foreach(var element in columns)
+            {
+                dgProducts.Columns[i++].HeaderText = element;
+            }
+            i = 0;
+            foreach(var element in items)
+            {
+                comboBoxSorting.Items[i++] = element;
+            }
+       }
+
+        public void setEnglish()
+        {
+            lblProductsHeader.Text = "Products";
+            btnNewProduct.Text = "New product";
+
+            List<string> columns = new List<string> { "ID", "Name", "Quantity", "Description", "Manufacturer", "Price" };
+            List<string> items = new List<string> { "ID", "Name", "Quantity", "Price" };
+            int i = 0;
+            foreach (var element in columns)
+            {
+                dgProducts.Columns[i++].HeaderText = element;
+            }
+
+            i = 0;
+            foreach (var element in items)
+            {
+                comboBoxSorting.Items[i++] = element;
+            }
+
+        }
+
+
+        public void setTheme(Theme theme)
+        {
+            panelProductsHeader.BackColor = panelProductsFooter.BackColor = theme.headerFooterColor;
+            BackColor = theme.backColor;
+            lblProductsHeader.ForeColor = theme.foreColorMain;
+            lblProductsHeader.Font = new Font(theme.font, 12);
+            lblSorting.ForeColor = lblSearch.ForeColor = btnNewProduct.ForeColor = theme.foreColorText;
+            lblSorting.Font = lblSearch.Font = btnNewProduct.Font = new Font(theme.font, 11);
+            
+        }
+        private void addColumnButtons()
+        {
+            DataGridViewButtonColumn editButtonColumn = new DataGridViewButtonColumn();
+            editButtonColumn.Text = "Edit";
+            editButtonColumn.UseColumnTextForButtonValue = true;
+            
+            
+            DataGridViewButtonColumn deleteButtonColumn = new DataGridViewButtonColumn();
+            deleteButtonColumn.Text = "Delete";
+            deleteButtonColumn.UseColumnTextForButtonValue = true;
+            dgProducts.Columns.Add(editButtonColumn);
+            dgProducts.Columns.Add(deleteButtonColumn);
+        }
+
+
+        private void adjustDGHeight()
+        {
+            int rowsHeight = dgProducts.Rows.GetRowsHeight(DataGridViewElementStates.Visible);
+            int headerHeight = dgProducts.ColumnHeadersHeight;
+            dgProducts.Height = rowsHeight + headerHeight + 2; 
+
+            
+        }
+
+
+        private void loadProducts()
+        {
+            try
+            {
+                using (var context = new PharmacyDB())
+                {
+                    Product[] products = context.Products.ToArray();
+                    foreach(Product product in products) 
+                    {
+                        string manufactName = context.Manufacturers.Where(m => m.ManufacturerId == product.ManufacturerId).FirstOrDefault().Name;
+                        decimal purchasePrice = (decimal)context.Prices.Where(p => p.PriceId == product.PriceId).FirstOrDefault().PurchasePrice;
+                        decimal sellingPrice = (decimal)context.Prices.Where(p => p.PriceId == product.PriceId).FirstOrDefault().SellingPrice;
+                        int r=dgProducts.Rows.Add(product.ProductId, product.Name, product.Quantity, product.Description, manufactName, purchasePrice,sellingPrice); 
+                    }
+                   
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Load products:" + ex.Message);
+            }
+        }
+
+        private void selectProduct()
+        {
+            
+        }
+        public void setTitleProductsColor(Color color)
+        {
+            lblProductsHeader.ForeColor = color;
+        }
+        private void btnNewProduct_Click(object sender, EventArgs e)
+        {
+            new NewProductForm().Show();
+            
+        }
+
+        public void dgProducts_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            int row = e.RowIndex;
+            //int column = e.ColumnIndex;
+            int id = Convert.ToInt32(dgProducts.Rows[row].Cells[0].Value);
+            
+                using (var context = new PharmacyDB())
+                {
+                    var product = context.Products.Where(p => p.ProductId == id).FirstOrDefault();
+                    updatePoduct(product);
+                }
+
+
+        }
+
+
+
+        private void updatePoduct(Product product)
+        {
+            try
+            {
+                    var productForm = new NewProductForm();
+                    productForm.setProductData(product);
+                    productForm.Show();
+                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Update product" + ex.Message);
+            }
+        }
+
+        private void deleteProduct(Product product)
+        {
+            
+           
+                using(var context=new PharmacyDB())
+                {
+                    //context.Products.Attach(product);
+                    context.Products.Remove(product);
+                    context.SaveChanges();
+                    Console.WriteLine("L");
+                }
+           
+        }
+
+        private void dgProducts_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+
+        }
+
+        private void dgProducts_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            //int row = e.RowIndex;
+            ////int column = e.ColumnIndex;
+            //int id = Convert.ToInt32(dgProducts.Rows[row].Cells[0].Value);
+            //try
+            //{
+            //    using (var context = new PharmacyDB())
+            //    {
+            //        var product = context.Products.Where(p => p.ProductId == id).FirstOrDefault();
+            //        updatePoduct(product);
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine("Update product" + ex.Message);
+            //}
+        }
+
+        private void dgProducts_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex>=0 && dgProducts.Columns[e.ColumnIndex] is DataGridViewButtonColumn)
+            {
+                if (dgProducts.Columns[e.ColumnIndex].HeaderText == "Edit")
+                {
+                    try
+                    {
+                        using (var context = new PharmacyDB())
+                        {
+                            int id = Convert.ToInt32(dgProducts.Rows[e.RowIndex].Cells[0].Value);
+                            var product = context.Products.Where(p => p.ProductId == id).FirstOrDefault();
+                            if (product != null)
+                            {
+                                updatePoduct(product);
+                            }
+                            
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Update product: " + ex.Message);
+                    }
+                }
+
+            }
+        }
+
+        private void dgProducts_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+            DataGridView dgv = (DataGridView)sender;
+            //if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dgProducts.Columns[e.ColumnIndex] is DataGridViewButtonColumn)
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                if (dgv.Columns[e.ColumnIndex] is DataGridViewButtonColumn)
+                {
+
+                    using (var context = new PharmacyDB())
+                    {
+                        int id = Convert.ToInt32(dgProducts.Rows[e.RowIndex].Cells[0].Value);
+                        Product product = context.Products.Where(p => p.ProductId == id).FirstOrDefault();
+
+
+
+                        //EDIT
+                        if (e.ColumnIndex == 7)
+                        {
+                            Console.WriteLine("Nom");
+                            updatePoduct(product);
+                            Console.WriteLine("Hehe");
+                        }
+
+                        //Delete
+                        else if (e.ColumnIndex == 8)
+                        {
+                            string message = "Potvrdite brisanje.";
+                            DialogResult result = MessageBox.Show(message, "brisanje", MessageBoxButtons.OKCancel);
+                            if (result == DialogResult.OK)
+                            {
+                                deleteProduct(product);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+        
+
+        public void setPanelColors(Color headerFooterColor, Color backColor)
+        {
+            panelProductsHeader.BackColor = panelProductsFooter.BackColor = headerFooterColor;
+            this.BackColor = backColor;
+            
+        }
+
+        public void setPanelFont(FontFamily font)
+        {
+            
+            lblProductsHeader.Font = new Font(font, (float)Convert.ToInt32(lblProductsHeader.Font.Size));
+            lblSorting.Font = new Font(font, (float)Convert.ToInt32(lblSorting.Font.Size));
+            lblSearch.Font = new Font(font, (float)Convert.ToInt32(lblSearch.Font.Size));
+            btnNewProduct.Font= new Font(font, (float)Convert.ToInt32(btnNewProduct.Font.Size));
+            
+        }
+
+        private void setPanelProperties(Color headerFooterColor, Color backColor, FontFamily font)
+        {
+            setPanelColors(headerFooterColor, backColor);
+            setPanelFont(font);
+        }
+
+        
+        private void tbSearch_TextChanged(object sender, EventArgs e)
+        {
+            using (var context = new PharmacyDB())
+            {
+                var users = context.Products.ToArray();
+                var words = tbSearch.Text.Trim().ToLower().Split(' ').ToList();
+                int count = words.Count;
+
+                foreach (DataGridViewRow row in dgProducts.Rows)
+                {
+                    List<int> indexes = new List<int>();
+
+                    foreach (string word in words)
+                    {
+                        for (int i = 0; i < row.Cells.Count; i++)
+                        {
+                            DataGridViewCell cell = row.Cells[i];
+
+                            if (cell.Value != null && cell.Value.ToString().ToLower().Contains(word))
+                            {
+
+                                if (!indexes.Contains(i))
+                                {
+                                    indexes.Add(i);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (indexes.Count == count)
+                    {
+                        row.Visible = true;
+                    }
+                    else
+                    {
+                        row.Visible = false;
+                    }
+
+                }
+            }
+
+            adjustDGHeight();
+        }
+
+        private void sortDGV()
+        {
+
+        }
+        private List<Product> sortProducts(string criteria, bool ascending)
+        {
+            switch (criteria)
+            {
+                case "ID":
+                case "Šifra":
+                    return sortByProductId(ascending);
+
+                case "Name":
+                case "Naziv":
+                    return sortByName(ascending);
+
+                case "Quantity":
+                case "Kolièina":
+                    return sortByQuantity(ascending);
+
+                case "Price":
+                case "Cijena":
+                    return sortByPrice(ascending);
+
+                default:
+                    return null;
+            }
+           
+            
+        }
+       
+        private List<Product> sortByName(bool ascending)
+        {
+            using(var context=new PharmacyDB())
+            {
+                var products = context.Products.ToList();
+                if (ascending == true)
+                {
+                    return products.OrderBy(p => p.Name).ToList();
+                }
+                else
+                {
+                    return products.OrderByDescending(p => p.Name).ToList();
+                }
+
+            }
+        }
+
+        private List<Product> sortByProductId(bool ascending)
+        {
+            using (var context = new PharmacyDB())
+            {
+                var products = context.Products.ToList();
+                if (ascending == true)
+                {
+                    return products.OrderBy(p => p.ProductId).ToList();
+                }
+                else
+                {
+                    return products.OrderByDescending(p => p.ProductId).ToList();
+                }
+
+            }
+        }
+
+        private List<Product> sortByQuantity(bool ascending)
+        {
+            using (var context = new PharmacyDB())
+            {
+                var products = context.Products.ToList();
+                if (ascending == true)
+                {
+                    return products.OrderBy(p => p.Quantity).ToList();
+                }
+
+                else
+                {
+                    return products.OrderByDescending(p => p.Quantity).ToList();
+                }
+            }
+        }
+
+        private List<Product> sortByPrice(bool ascending)
+        {
+            using (var context = new PharmacyDB())
+            {
+                var products = context.Products.ToList();
+                if (ascending == true)
+                {
+                    return products.OrderBy(p => p.Price.SellingPrice).ToList();
+                }
+                else
+                {
+                    return products.OrderByDescending(p => p.Price.SellingPrice).ToList();
+                }
+            }
+        }
+
+
+        private void displayProducts(List<Product> products)
+        {
+            dgProducts.Rows.Clear();
+
+            using (var context = new PharmacyDB())
+            {
+                foreach (Product product in products)
+                {
+                    string manufactName = context.Manufacturers.Where(m => m.ManufacturerId == product.ManufacturerId).FirstOrDefault().Name;
+                    decimal purchasePrice = (decimal)context.Prices.Where(p => p.PriceId == product.PriceId).FirstOrDefault().PurchasePrice;
+                    decimal sellingPrice = (decimal)context.Prices.Where(p => p.PriceId == product.PriceId).FirstOrDefault().SellingPrice;
+                    
+                    int r = dgProducts.Rows.Add(product.ProductId, product.Name, product.Quantity, product.Description, manufactName, purchasePrice, sellingPrice);
+                }
+                dgProducts.Refresh();
+                dgProducts.Show();
+            }
+        }
+
+        private void comboBoxSorting_SelectedValueChanged(object sender, EventArgs e)
+        {
+            string criteria = comboBoxSorting.SelectedItem.ToString();
+            bool ascending = (checkBoxSorting.Checked) ? true : false;
+            displayProducts(sortProducts(criteria, ascending));
+        }
+
+        private void dgProducts_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+
+        }
+
+        private void checkBoxSorting_CheckedChanged(object sender, EventArgs e)
+        {
+            Console.WriteLine(comboBoxSorting.SelectedItem.ToString());
+            List<Product> products = new List<Product>();
+            bool isChecked= (checkBoxSorting.Checked) ? true : false;
+
+            switch (comboBoxSorting.SelectedItem.ToString())
+            {
+                case "ID": 
+                case "Šifra":
+
+                    {
+                        products=sortByProductId(isChecked);
+                        break;
+                    }
+
+                case "Name":
+                case "Naziv":
+                    {
+                        Console.WriteLine("Mrvica.");
+                        products=sortByName(isChecked);
+                        foreach (var p in products) Console.WriteLine(p.Name);
+                        break;
+                    }
+
+
+                case "Quantity":
+                case "Kolièina":
+                    {
+                        products = sortByQuantity(isChecked);
+                        break;
+                    }
+
+                case "Price":
+                case "Cijena":
+                    {
+                        products = sortByPrice(isChecked);
+                        break;
+                    }
+                    
+
+            }
+            displayProducts(products);
+            
+            //if(comboBoxSorting.SelectedItem.ToString()=="Id" || comboBoxSorting.SelectedItem.ToString() == "Šifra")
+            //{
+            //products=sortByProductId(isChecked);
+
+            //}
+            //else if(comboBoxSorting.SelectedItem.ToString()=="Name" || comboBoxSorting.SelectedItem.ToString() == "Ime")
+            //{
+            //products=sortByName(isChecked);
+            //}
+            //else if(comboBoxSorting.SelectedItem.ToString()=="Quantity" || comboBoxSorting.SelectedItem.ToString() == "Kolièina")
+            //{
+            //products=sortByQuantity(isChecked);
+            //}
+            //else if(comboBoxSorting.SelectedItem.ToString()=="Price" || comboBoxSorting.SelectedItem.ToString() == "Cijena")
+            //{
+            //   products=sortByPrice(isChecked);
+            //}
+
+            displayProducts(products);
+            
+        }
+    }
+    }
+

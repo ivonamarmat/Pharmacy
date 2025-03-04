@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "SgBBFZKabEX/cZ0wuzB3GuATLbJwk5F5/J8acGT98OnHuu8tS2FV8HXI8FknhyisDdVSskdkzIIvf1DUVmeDJA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Korisnik\\source\\repos\\Projekat_A-Apoteka\\Pharmacy\\Pharmacy\\Pharmacy.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Korisnik\\.nuget\\packages\\entityframework\\6.2.0\\entityframework.6.2.0.nupkg.sha512"
+  ],
+  "logs": []
+}
